@@ -1,0 +1,636 @@
+{
+  "name": "HR Agent(On/Off boarding)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "e0d1b95d-36c8-45d0-b9b0-5177003d3bc4",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1240,
+        2740
+      ],
+      "id": "36662051-5033-4263-9a75-3b52f0dfb374",
+      "name": "Webhook",
+      "webhookId": "e0d1b95d-36c8-45d0-b9b0-5177003d3bc4"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "channel": "=orbit_team\n\n",
+        "text": "={{ $json.output.slackMessage }}\n",
+        "otherOptions": {},
+        "attachments": []
+      },
+      "id": "89468be7-564b-4048-bbf2-7648c1d28286",
+      "name": "Slack - Onboard",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        -260,
+        2540
+      ],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "n4PtBRNo0fQVeezB",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.output.to }}\n",
+        "subject": "={{ $json.output.emailSubject }}\n",
+        "message": "={{ $json.output.emailBody }}",
+        "options": {}
+      },
+      "id": "ed9065b0-0558-4915-b24b-f1e578fd2c55",
+      "name": "Gmail - Onboard",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        2680
+      ],
+      "webhookId": "6e8c6a15-3722-44b9-a262-c67febb683a8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "81dTrgb6UsA7z2vs",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "channel": "orbit_team",
+        "text": "={{ $json.output.slackMessage }}\n",
+        "otherOptions": {},
+        "attachments": []
+      },
+      "id": "c4a0283b-77e1-4688-a7b6-4e2d9fd92c89",
+      "name": "Slack -Offboard",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        -260,
+        3040
+      ],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "n4PtBRNo0fQVeezB",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.output.to }}",
+        "subject": "={{ $json.output.emailSubject }}",
+        "message": "={{ $json.output.emailBody }}\n",
+        "options": {}
+      },
+      "id": "758c9034-2081-4b6a-ae7a-99ca3da526e7",
+      "name": "Gmail OffBoard",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        2860
+      ],
+      "webhookId": "1168c557-1857-4c42-9d71-e4823b720ff3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "81dTrgb6UsA7z2vs",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a comprehensive onboarding message suite for a new employee using the structured format below.\n\n**Message Requirements:**\n\n**Slack Message (3-5 lines):**\n- Tone: Warm, welcoming, energetic, and casual\n- Content: Brief celebration of new hire with team mention\n- Style: Use emojis appropriately, keep conversational\n- Length: Maximum 3-5 lines to ensure readability in Slack\n\n**Email Body (5-7 lines):**\n- Tone: Professional yet friendly and welcoming\n- Content: Comprehensive welcome with key details\n- Formatting: Clean HTML with proper structure\n- Required Elements: Professional greeting with full name, explicit start date confirmation, manager introduction and reporting structure, department/team context, next steps or what to expect, professional sign-off with sender identification\n\n**Input Variables:**\n- Name: {{ $json.body.name }}\n- Email: {{ $json.body.email }}\n- Department: {{ $json.body.department }}\n- Start Date: {{ $json.body.start_date }}\n- Manager: {{ $json.body.manager }}\n\n**Output Format:**\nReturn ONLY a flat, valid JSON object with no markdown formatting, code blocks, or nested properties.\n\nRequired JSON structure:\n{\n  \"to\": \"recipient's email address\",\n  \"emailSubject\": \"compelling and professional subject line (8-12 words)\",\n  \"emailBody\": \"HTML-formatted welcome email with proper tags and structure (5-7 lines)\",\n  \"slackMessage\": \"engaging celebratory announcement with emojis and team mention (3-5 lines)\"\n}\n\n**Quality Guidelines:**\n- Personalization: Use the provided name and details naturally\n- Consistency: Maintain brand voice across both channels\n- Accessibility: Ensure HTML is properly formatted and readable\n- Engagement: Create excitement about joining the team\n- Clarity: Make next steps and expectations clear\n- Professionalism: Balance warmth with workplace appropriateness\n\nGenerate messages that make the new employee feel valued, informed, and excited to start their journey with the organization.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "AIMessagePromptTemplate",
+              "message": "={{ $json.body.name }} has joined the {{ $json.body.department }} team.\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -620,
+        2640
+      ],
+      "id": "46b94c55-eefc-4bd4-94fe-55e75b4ebb2a",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "=mistral-small",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        2520
+      ],
+      "id": "d5db8770-225e-423c-8746-64e79a52e433",
+      "name": "Mistral Cloud Chat Model",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "MuuoznObfsdQDTbs",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"to\": { \"type\": \"string\" },\n    \"emailSubject\": { \"type\": \"string\" },\n    \"emailBody\": { \"type\": \"string\" },\n    \"slackMessage\": { \"type\": \"string\" }\n  },\n  \"required\": [\"to\", \"emailSubject\", \"emailBody\", \"slackMessage\"]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -460,
+        2520
+      ],
+      "id": "d618a508-9702-435e-9200-683c4b16075c",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        3140
+      ],
+      "id": "f103df58-0169-4d63-8df3-d14581b063cc",
+      "name": "Mistral Cloud Chat Model1",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "MuuoznObfsdQDTbs",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a structured offboarding message suite for an exiting employee using the JSON format below.\nSlack Message (3–5 lines):\n\nTone: Appreciative, warm, brief, and team-aware\nContent: Farewell note, last day and department mention, gratitude\nStyle: Emoji-friendly and team-readable\n\nEmail Body (5–7 lines):\n\nTone: Respectful and professional\nContent: Acknowledge employee's departure, summarize contributions, provide offboarding date clarity, and offer best wishes\nFormatting: Clean HTML with appropriate structure\nInclude: Greeting, offboarding confirmation, farewell note, next steps if applicable, and sign-off\n\nInput Details:\n\nName: {{ $json.body.name }}\nEmail: {{ $json.body.email }}\nDepartment: {{ $json.body.department }}\nEnd Date: {{ $json.body.start_date }}\nManager: {{ $json.body.manager }}\n\nReturn ONLY this JSON:\n{\n\"to\": \"recipient's email\",\n\"emailSubject\": \"brief subject line for farewell\",\n\"emailBody\": \"HTML email string (5–7 lines)\",\n\"slackMessage\": \"Slack message string (3–5 lines)\"\n}\nNo explanations, markdown, or nesting.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "AIMessagePromptTemplate",
+              "message": "={{ $json.body.name }} has been offboarded the {{ $json.body.department }} team."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -620,
+        2980
+      ],
+      "id": "3159d120-e20f-4bfd-b3ee-b523fdf392b4",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"to\": { \"type\": \"string\" },\n    \"emailSubject\": { \"type\": \"string\" },\n    \"emailBody\": { \"type\": \"string\" },\n    \"slackMessage\": { \"type\": \"string\" }\n  },\n  \"required\": [\"to\", \"emailSubject\", \"emailBody\", \"slackMessage\"]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -460,
+        3140
+      ],
+      "id": "4b3bfe4b-1e7b-4ec4-8b95-ef6f64682b74",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://orbitx5613.app.n8n.cloud/webhook/manager-review-submitted",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -600,
+        2360
+      ],
+      "id": "1d19ffc5-6cb0-4e98-a3e2-c4399ca00c4d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://orbitx5613.app.n8n.cloud/webhook/0db376e7-6eba-488c-9bde-40e9d95b02d4",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -620,
+        2800
+      ],
+      "id": "d36d0e41-b010-43cf-9e78-71aa3fae9ac4",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "56c61648-c897-4dac-b1a9-df5e3ca3f71d",
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "onboard",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "4a45cf58-b480-4e0e-afee-2aa36445f4cc",
+              "leftValue": "={{ $json.body.department }}",
+              "rightValue": "^[Ee]ngineering|ENGINEERING$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -960,
+        2380
+      ],
+      "id": "5b00976e-e7ef-4aaa-926d-4d445ea744ae",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8193160c-d34a-40a4-a50e-a7be8336b178",
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "onboard",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "209099b8-5f65-4a63-9323-ab35369010af",
+              "leftValue": "={{ $json.body.department }}",
+              "rightValue": "Engineering",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -960,
+        2660
+      ],
+      "id": "c8be9585-c8ad-4d66-a01b-6d609441dba6",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8193160c-d34a-40a4-a50e-a7be8336b178",
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "offboard",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "4ec4397c-bd72-4b3d-a592-bb6a64c1f5f4",
+              "leftValue": "={{ $json.body.department }}",
+              "rightValue": "Engineering",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -960,
+        2820
+      ],
+      "id": "427a29a3-f001-4cc6-9bd8-09d08b188cc7",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8193160c-d34a-40a4-a50e-a7be8336b178",
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "offboard",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "8e684189-b165-41f3-afa7-b1c056fa7b22",
+              "leftValue": "={{ $json.body.department }}",
+              "rightValue": "Engineering",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -960,
+        3000
+      ],
+      "id": "5c98cfc1-2d31-419b-9798-b53a4f1774f3",
+      "name": "If3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack - Onboard": {
+      "main": [
+        []
+      ]
+    },
+    "Gmail - Onboard": {
+      "main": [
+        []
+      ]
+    },
+    "Slack -Offboard": {
+      "main": [
+        []
+      ]
+    },
+    "Gmail OffBoard": {
+      "main": [
+        []
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Slack - Onboard",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gmail - Onboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Slack -Offboard",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gmail OffBoard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        []
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "2eae3777-7356-4b2d-8548-51495e26b643",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c2ddce833599e9b4aa840076a3a8a143c91ada4c78121148acc12f9ebfe54976",
+    "workflow_metadata": 
+    {
+      "title": "HR Agent - On/Offboarding Automation",
+      "description": "Creates personalized onboarding and offboarding messages for new hires or exiting employees, sends Slack announcements and formal emails to streamline team communication.",
+      "domain": "HR",
+      "tags": ["onboarding", "offboarding", "employee lifecycle", "Slack notifications", "email templates"],
+      "parameter_types": ["name", "email", "department", "start_date", "end_date", "manager", "action"]
+    }
+  },
+  "id": "hRnlx9dqqcXYM8d1",
+  "tags": [
+    {
+      "createdAt": "2025-06-07T12:05:23.700Z",
+      "updatedAt": "2025-06-07T12:05:23.700Z",
+      "id": "FgMWqwsEXWRPGoG7",
+      "name": "HR Automation"
+    }
+  ]
+  
+}
+
+
+

@@ -1,0 +1,303 @@
+{
+  "name": "HR Agent(Offer Letter generator)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-offer-letter",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "96130bef-8771-419e-9de5-d0ada30653ff",
+      "name": "Webhook",
+      "webhookId": "eb0d1b9e-0ef7-4ddd-97aa-5613e470f83b"
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  json: {\n    candidateEmail: $json.body?.candidateEmail || $json.candidateEmail\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "415f3c17-c4d0-4044-9ad1-48c5d6432f04",
+      "name": "Function: Extract Email"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "10-y2eohqVTn2lkCWdr6VyrDAeZqY9CZsb78Ak9HZoMA",
+          "mode": "list",
+          "cachedResultName": "Job applicants(Orbitx)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10-y2eohqVTn2lkCWdr6VyrDAeZqY9CZsb78Ak9HZoMA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 654304842,
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10-y2eohqVTn2lkCWdr6VyrDAeZqY9CZsb78Ak9HZoMA/edit#gid=654304842"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Email",
+              "lookupValue": "={{ $json.candidateEmail }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        440,
+        0
+      ],
+      "id": "aa030571-6c6a-496f-bde3-d515f8e376a3",
+      "name": "Google Sheets",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g5EWrONTPvqwZr7Q",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const c = items[0].json;\n\n// You can customize these static fields\nconst companyName = \"Orbitx Technologies\";\nconst senderName = \"Aditya Sahoo\";\nconst senderDesignation = \"HR Manager\";\nconst today = new Date().toISOString().split(\"T\")[0];\nconst joiningDate = \"2025-07-01\";\nconst workLocation = \"Hyderabad\";\nconst teamName = \"AI & ML\";\nconst managerName = \"Rahul Menon\";\nconst managerDesignation = \"Director of Engineering\";\nconst offerExpiryDate = \"2025-06-20\";\n\nconst offerLetterHTML = `\n<p><strong>${companyName}</strong></p>\n<p>${today}</p>\n\n<p><strong>Subject: Employment offer from ${companyName}</strong></p>\n\n<p>Dear <em>${c.Name}</em>,</p>\n\n<p>We are pleased to <strong>offer you the position of ${c[\"Role Applied For\"]}</strong> at ${companyName}.</p>\n\n<p>Your annual cost to company is <strong>${c[\"Salary Offered\"]}</strong> [in words]. The breakdown of your gross salary and information specific to employee benefits can be found in Annexure A.</p>\n\n<p>We would like you to start work on <strong>${joiningDate}</strong> from the base location, <strong>${workLocation}</strong>. You will work with the <strong>${teamName}</strong> team and report directly to <strong>${managerName}, ${managerDesignation}</strong>.</p>\n\n<p>If you choose to accept this job offer, please sign and return this letter by <strong>${offerExpiryDate}</strong>. Once we receive your acceptance, we will provide information about onboarding and other asset details.</p>\n\n<p>We are confident that you will find this offer exciting, and I, on behalf of ${companyName}, assure you of a very rewarding career in our organization.</p>\n\n<p>Sincerely, <br>\n${senderName} <br>\n${senderDesignation}, ${companyName}\n</p>\n`;\n\nreturn [{\n  json: {\n    ...c,\n    offer_letter_html: offerLetterHTML,\n    offer_letter_text: offerLetterHTML.replace(/<[^>]+>/g, \"\") // plain text version\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "id": "f3f4abb4-274d-4b0f-86cb-ec8e8011254c",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.pdfmonkey.io/api/v1/documents",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer TvxvouhwyF3sgG-JzFzA"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ \n  JSON.stringify({\n    document: {\n      document_template_id: \"D8972875-263B-4BC7-8F1E-6C8020765684\",\n      payload: {\n        offer_letter_html: $json.offer_letter_html\n      },\n      \"status\": \"pending\"\n    }\n  }) \n}}\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        0
+      ],
+      "id": "1d09b680-39b7-43fd-9233-ec7795aace91",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.pdfmonkey.io/api/v1/documents/{{ $json.document.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer TvxvouhwyF3sgG-JzFzA"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ],
+      "id": "230c9fa1-7117-49b4-8d7f-c044939a21a1",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.document.download_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        0
+      ],
+      "id": "c2a05263-a1e1-486b-add8-51fac752b22d",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.body.candidateEmail }}",
+        "subject": "Your Official Offer Letter from Orbitx Team",
+        "message": "=Hi {{ $('Google Sheets').item.json.Name }},Find attached your official offer letter PDF.",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "={{ 'data' }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1500,
+        0
+      ],
+      "id": "63f4cbe3-dde6-4c08-ba60-b25621b2ca59",
+      "name": "Gmail",
+      "webhookId": "684ecfe9-cb90-4278-b462-ababb1c3fb81",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "81dTrgb6UsA7z2vs",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Function: Extract Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function: Extract Email": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9a5e71e9-be98-4148-bb86-e3f92462fbdb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c2ddce833599e9b4aa840076a3a8a143c91ada4c78121148acc12f9ebfe54976",
+    "workflow_metadata": 
+    {
+      "title": "HR Agent - Offer Letter Generator",
+      "description": "Automatically generates a customized offer letter by fetching candidate details from a Google Sheet, formats it in HTML, converts to PDF, and emails it to the candidate.",
+      "domain": "HR",
+      "tags": ["offer letter", "candidate onboarding", "PDF generation", "email automation"],
+      "parameter_types": ["candidateEmail", "Name", "Role Applied For", "Salary Offered"]
+    }
+  },
+  "id": "w215N13ztbXcYTUA",
+  "tags": []
+}

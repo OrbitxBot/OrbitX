@@ -1,0 +1,543 @@
+{
+  "name": "CRM Agent(Customer LifeCycle Automation)",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "18tcAgETe5PwcuH_lZ1Y08nHePA4HjBwMCKPDOk_UVI8",
+          "mode": "list",
+          "cachedResultName": "Customer Details",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18tcAgETe5PwcuH_lZ1Y08nHePA4HjBwMCKPDOk_UVI8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1298471486,
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18tcAgETe5PwcuH_lZ1Y08nHePA4HjBwMCKPDOk_UVI8/edit#gid=1298471486"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Customer Name": "={{ $json.body.customer_name }}",
+            "Email": "={{ $json.body.customer_email }}",
+            "Signup Date": "={{ $json.body.signup_date }}",
+            "Subscription ": "={{ $json.body.Subscription }}"
+          },
+          "matchingColumns": [
+            "Customer Name"
+          ],
+          "schema": [
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Signup Date",
+              "displayName": "Signup Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subscription ",
+              "displayName": "Subscription ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -840,
+        160
+      ],
+      "id": "f7f0e054-2dde-4ee2-a666-48e93d35bbfe",
+      "name": "Customer Details",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g5EWrONTPvqwZr7Q",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "=Welcome to Our Service, {{ $json['Customer Name'] }}!",
+        "message": "=Greetings,<br><br>\nThank you for subscribing to our service! We’re excited to have you on board.<br><br>\nYour subscription type: <strong>{{ $json['Subscription '] }}</strong><br><br>\nIf you have any questions, feel free to reach out anytime.<br><br>\nBest regards,<br>\nThe Support Team\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -620,
+        160
+      ],
+      "id": "98b50a3d-d1ed-4baa-a87f-d8d57cf211b7",
+      "name": "Greetings mail",
+      "webhookId": "7e65f74f-96e9-4eab-8c0b-7ef91a0496ed",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "81dTrgb6UsA7z2vs",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ca761116-e432-424d-bb31-0db35216f554",
+              "leftValue": "={{ $('Webhook').item.json.body.message }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -400,
+        160
+      ],
+      "id": "bef17067-8feb-43c8-a234-7f0a48e1e962",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        -160
+      ],
+      "id": "864107c8-1c88-4213-9c10-11639f59d5cf",
+      "name": "Mistral Cloud Chat Model",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "by4PkQxjQffBAnGa",
+          "name": "Mistral Cloud account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "046cb625-59fc-4335-b2b8-1d44c8f1f926",
+              "name": "reply",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        100,
+        0
+      ],
+      "id": "b6767b1a-2077-425a-9be7-e4a169f85333",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "c6f85f87-50e1-4440-b68c-92dd7fb4540b",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1060,
+        160
+      ],
+      "id": "e4415c3f-e6bf-4d5a-8a1f-b35817dbad23",
+      "name": "Webhook",
+      "webhookId": "c6f85f87-50e1-4440-b68c-92dd7fb4540b"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an intelligent, friendly customer care assistant for OrbitX, a company that provides workflow automation as a service for businesses of all sizes.\n\nYour job is to answer customer questions clearly, politely, and accurately. \nYou can help with topics like:\n- Explaining what workflow automation is\n- Describing how our service works\n- Giving examples of what processes can be automated\n- Helping with common setup or onboarding questions\n- Directing users to support if you can't answer something\n\nAlways keep answers short, clear, and non-technical if the user seems non-technical.\nIf you do not know the answer, politely say you will connect them to a human agent.\n\nHere is the customer’s message:\n{{ $json.chatInput }}\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -240,
+        0
+      ],
+      "id": "955ed3cc-c597-49cc-8e6d-23a7d88ec4c5",
+      "name": "ChatBot"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.body.customer_email }}",
+        "subject": "=We’ve Answered Your Question: \"{{ $('Webhook').item.json.body.message }}\"",
+        "emailType": "text",
+        "message": "=Heyy {{ $('Webhook').item.json.body.customer_name }},  Thank you for your question! Here’s the information you requested: {{ $json.reply }} If you have any more questions or need further assistance, feel free to reply to this email.  Best regards,   OrbitX Support Team",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        280,
+        0
+      ],
+      "id": "01a8cd8d-4df0-404b-bf25-bf9ebd35f4d2",
+      "name": "ChatBot Response",
+      "webhookId": "0a0863ab-acba-4fbe-bd46-6c303e18a99a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "81dTrgb6UsA7z2vs",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -180,
+        180
+      ],
+      "id": "b0d387d3-166d-4a8e-aed9-e4c8bdcc20db",
+      "name": "Wait 3 days",
+      "webhookId": "317871da-2ae6-4b95-a32f-224ea5281918"
+    },
+    {
+      "parameters": {
+        "amount": 7
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -180,
+        360
+      ],
+      "id": "03a325e9-d71a-46cf-aa98-d6cffb567c26",
+      "name": "Wait 7 days",
+      "webhookId": "3407e560-43fd-40d9-ab4b-59d483e858ef"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.body.customer_email }}",
+        "subject": "=Just Checking In — Any Questions So Far?\n",
+        "emailType": "text",
+        "message": "=Hi {{ $json.customer_name }},\n\nWe hope you're enjoying getting started with OrbitX! Just checking in to see if you have any questions or need any help.\n\nFeel free to reply to this email anytime — we’re always here for you.\n\nBest,  \nOrbitX Support Team\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        60,
+        180
+      ],
+      "id": "f5aad4d2-b0d9-4bd5-80ec-9356eb097366",
+      "name": "Follow up mail (3days)",
+      "webhookId": "0a0863ab-acba-4fbe-bd46-6c303e18a99a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "81dTrgb6UsA7z2vs",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.body.customer_email }}",
+        "subject": "=Tips to Make the Most of Your OrbitX Service\n",
+        "emailType": "text",
+        "message": "=Hi {{ $json.customer_name }},\n\nIt’s been a week since you joined OrbitX — here are a few quick tips to help you get the most out of your workflow automations:\n\n- Explore our help center for step-by-step guides.\n- Try automating simple tasks like notifications or reminders.\n- Reach out to us if you’d like advice tailored for your business.\n\nWe’re here to help you succeed!\n\nCheers,  \nOrbitX Support Team\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        60,
+        360
+      ],
+      "id": "3497ce17-294c-4056-bd46-6a5f8af6b2b5",
+      "name": "Follow up mail (7 days)",
+      "webhookId": "0a0863ab-acba-4fbe-bd46-6c303e18a99a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "81dTrgb6UsA7z2vs",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0910N4PT7H",
+          "mode": "list",
+          "cachedResultName": "crm_team"
+        },
+        "text": "Heads up team: A follow-up automation just ran successfully for a customer. Please check the CRM or email logs if you need details. ",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        540,
+        180
+      ],
+      "id": "5947fcf7-85a0-4c9a-a21c-3871e0c5fd03",
+      "name": "Slack",
+      "webhookId": "566afab1-fcc2-4032-9470-714876b17911",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "n4PtBRNo0fQVeezB",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Customer Details": {
+      "main": [
+        [
+          {
+            "node": "Greetings mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "ChatBot",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 3 days",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait 7 days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ChatBot",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Greetings mail": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "ChatBot Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Customer Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ChatBot": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3 days": {
+      "main": [
+        [
+          {
+            "node": "Follow up mail (3days)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 7 days": {
+      "main": [
+        [
+          {
+            "node": "Follow up mail (7 days)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Follow up mail (7 days)": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ChatBot Response": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Follow up mail (3days)": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a00706c3-0c85-4abf-9016-539e929aae56",
+  "meta": {
+  
+    "metadata": {
+      "agent_name": "CRM Agent",
+      "agent_role": "Handles Customer Lifecycle Automation tasks",
+      "purpose": "Automatically manage customer onboarding, follow-ups, and engagement through Google Sheets, Gmail, and Slack.",
+      "workflows": [
+        {
+          "workflow_name": "Customer Lifecycle Automation",
+          "description": "Captures new customer details, stores them in Google Sheets, sends a welcome email, waits for specific durations, sends follow-up emails, and posts a Slack notification for internal teams.",
+          "steps": [
+            "1️⃣ Receive customer details from website/webhook.",
+            "2️⃣ Save or update customer record in Google Sheets.",
+            "3️⃣ Send a greeting email to the new customer via Gmail.",
+            "4️⃣ Wait 3 days, then send a check-in follow-up email.",
+            "5️⃣ Wait another 4 days (total 7 days from signup), then send a tips email.",
+            "6️⃣ After each email, post a notification to the Slack CRM channel for internal tracking.",
+            "7️⃣ Handle additional customer queries using a built-in chatbot if needed."
+          ],
+          "key_nodes": [
+            "Webhook → Google Sheets → Greeting Mail → Wait Nodes → Follow-up Mails → Slack Notifications → ChatBot"
+          ]
+        }
+      ],
+      "connected_services": [
+        "Google Sheets (for storing customer info)",
+        "Gmail (for automated emails)",
+        "Slack (for internal CRM updates)",
+        "Langchain/Mistral (for chatbot answers)"
+      ],
+      "templateCredsSetupCompleted": true,
+      "instanceId": "c2ddce833599e9b4aa840076a3a8a143c91ada4c78121148acc12f9ebfe54976"
+    }
+  },
+  "id": "MnN5ENlVRfaBgYOH",
+  "tags": []
+}
+

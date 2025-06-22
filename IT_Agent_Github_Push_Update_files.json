@@ -1,0 +1,198 @@
+{
+  "name": "IT Agent(Github Push&Update files)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "8f735114-3e4f-4cb8-bfd0-4d7222679eb4",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        -280,
+        100
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $('config').item.json.repo_owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $('config').item.json.repo_name }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $('config').item.json.file_path }}",
+        "fileContent": "={{ $json.decoded_content }}\n## Updated at:\n{{ $now.toISO() }}",
+        "commitMessage": "updated from n8n via GitHub node"
+      },
+      "id": "a08e92e0-e94d-411c-87e8-79e62b4c6de6",
+      "name": "GitHub push edited file",
+      "type": "n8n-nodes-base.github",
+      "position": [
+        520,
+        100
+      ],
+      "typeVersion": 1,
+      "webhookId": "9d81d6b5-7e1b-4da2-a44d-28401d568f31",
+      "credentials": {
+        "githubOAuth2Api": {
+          "id": "QARisOzbvBOssU7W",
+          "name": "GitHub account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "repo_owner",
+              "value": "OrbitxBot"
+            },
+            {
+              "name": "repo_name",
+              "value": "Test-Repo"
+            },
+            {
+              "name": "file_path",
+              "value": "README.md"
+            },
+            {
+              "name": "commit_message",
+              "value": "Updated README.md via automation"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "74b27e59-3684-4234-93e4-6a9ab84f07c9",
+      "name": "config",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -100,
+        100
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "={{ $json.repo_owner }}",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $json.repo_name }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $json.file_path }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {}
+      },
+      "id": "f1e8fd92-acfb-4900-962d-cf577cebbf04",
+      "name": "GitHub get file",
+      "type": "n8n-nodes-base.github",
+      "position": [
+        100,
+        100
+      ],
+      "typeVersion": 1,
+      "webhookId": "0d1cde6b-4ba4-4d2a-b9b9-7ebb72da8868",
+      "credentials": {
+        "githubOAuth2Api": {
+          "id": "QARisOzbvBOssU7W",
+          "name": "GitHub account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base64 = $json.content;\nconst decoded = Buffer.from(base64, 'base64').toString('utf8');\n\nreturn [{\n  json: {\n    decoded_content: decoded\n  }\n}];\n"
+      },
+      "id": "576a04cd-1d0b-4bf2-bbfd-b9a8e0e9e94f",
+      "name": "Decode file",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        320,
+        100
+      ],
+      "typeVersion": 2
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Decode file": {
+      "main": [
+        [
+          {
+            "node": "GitHub push edited file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub get file": {
+      "main": [
+        [
+          {
+            "node": "Decode file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking \"Execute Workflow\"": {
+      "main": [
+        [
+          {
+            "node": "config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "config": {
+      "main": [
+        [
+          {
+            "node": "GitHub get file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6cac5674-6424-43dd-b437-2a771f241d20",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c2ddce833599e9b4aa840076a3a8a143c91ada4c78121148acc12f9ebfe54976",
+    "workflow_metadata": 
+    {
+      "title": "IT Agent - GitHub Push & Update Files",
+      "description": "Fetches a file from a GitHub repository, decodes its content, updates it with new changes and a timestamp, and pushes the update back to the repository with a commit message.",
+      "domain": "IT",
+      "tags": ["GitHub", "file update", "push changes", "automation", "repository management"],
+      "parameter_types": ["repo_owner", "repo_name", "file_path", "commit_message", "decoded_content"]
+    }
+  },
+  "id": "Hx3qd0wYDlb6Veot",
+  "tags": []
+}

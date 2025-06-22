@@ -1,0 +1,131 @@
+{
+  "workflows_metadata": [
+    {
+      "title": "HR Agent - Offer Letter Generator",
+      "description": "Generates and sends personalized offer letters to selected candidates. Automates document creation, email dispatch, and logs confirmations in Google Sheets.",
+      "domain": "HR",
+      "tags": [
+        "HR automation",
+        "offer letter",
+        "Google Sheets",
+        "email automation"
+      ],
+      "parameter_types": [
+        "Candidate Name",
+        "Position",
+        "Salary",
+        "Start Date",
+        "Manager Name"
+      ]
+    },
+    {
+      "title": "HR Agent - On & Off Boarding",
+      "description": "Automates onboarding and offboarding workflows for employees. Manages account provisioning, checklist completion, notifications, and logs status updates.",
+      "domain": "HR",
+      "tags": [
+        "HR automation",
+        "onboarding",
+        "offboarding",
+        "Google Sheets",
+        "notifications"
+      ],
+      "parameter_types": [
+        "Employee Name",
+        "Role",
+        "Start Date",
+        "End Date",
+        "Department"
+      ]
+    },
+    {
+      "title": "HR Agent - Performance Review Management",
+      "description": "Handles scheduling, reminders, and status tracking for employee performance reviews. Sends reminders, collects feedback, and logs completion details.",
+      "domain": "HR",
+      "tags": [
+        "performance reviews",
+        "HR workflow",
+        "email notifications",
+        "Google Sheets"
+      ],
+      "parameter_types": [
+        "Employee Name",
+        "Reviewer Name",
+        "Review Period",
+        "Review Date"
+      ]
+    },
+    {
+      "title": "IT Agent - GitHub Access Invite",
+      "description": "Automates inviting team members to GitHub repositories. Handles permission assignment and logs the invite status in Google Sheets.",
+      "domain": "IT",
+      "tags": [
+        "GitHub access",
+        "IT workflow",
+        "automation",
+        "Google Sheets"
+      ],
+      "parameter_types": [
+        "Repository Name",
+        "Username",
+        "Permission Level"
+      ]
+    },
+    {
+      "title": "IT Agent - GitHub Push & Update Files",
+      "description": "Manages automated push and file update workflows for GitHub repositories. Verifies file changes, pushes commits, and logs activity to Google Sheets.",
+      "domain": "IT",
+      "tags": [
+        "GitHub automation",
+        "IT workflow",
+        "commit management",
+        "Google Sheets"
+      ],
+      "parameter_types": [
+        "Repository Name",
+        "File Path",
+        "Commit Message"
+      ]
+    },
+    {
+      "title": "Marketing Agent - Content Publishing",
+      "description": "Automates the generation and publishing of tailored social media posts (Twitter, Telegram, Reddit) based on content from Google Sheets. Filters content by upload date and priority, generates posts using LLM, and publishes them with Slack notifications.",
+      "domain": "Marketing",
+      "tags": [
+        "content publishing",
+        "social media",
+        "Google Sheets",
+        "LLM",
+        "Twitter",
+        "Telegram",
+        "Reddit",
+        "Slack"
+      ],
+      "parameter_types": [
+        "Title",
+        "Content",
+        "Category",
+        "Image_URL",
+        "Platforms",
+        "Upload_Date"
+      ]
+    },
+    {
+      "title": "Marketing Agent - Digital Marketing & SEO Analysis",
+      "description": "Performs a comprehensive SEO and digital marketing analysis of a given website URL. Extracts meta tags, headings, images, schema markup, and generates a structured executive summary and detailed report with improvement recommendations. Results are logged to Google Sheets, emailed, and announced via Slack.",
+      "domain": "Marketing",
+      "tags": [
+        "SEO",
+        "digital marketing",
+        "website analysis",
+        "OpenAI",
+        "Google Sheets",
+        "email notification",
+        "Slack alert"
+      ],
+      "parameter_types": [
+        "url",
+        "project_name"
+      ]
+    }
+  ]
+}

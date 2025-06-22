@@ -1,0 +1,719 @@
+{
+  "name": "Marketing Agent(Content Publishing)",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "da926a96-47d3-4e1b-9580-d9c14d5b7f4e",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1dwWsIRZv5vKvTLQQj2YafvwApoPMCTXHcLwS03xn0sE",
+          "mode": "list",
+          "cachedResultName": "Content_Automation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dwWsIRZv5vKvTLQQj2YafvwApoPMCTXHcLwS03xn0sE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2010383431,
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dwWsIRZv5vKvTLQQj2YafvwApoPMCTXHcLwS03xn0sE/edit#gid=2010383431"
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "specifyRangeA1"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        220,
+        0
+      ],
+      "id": "85ecfeb0-ee3b-4695-af0a-4fba4d245811",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g5EWrONTPvqwZr7Q",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date();\nconst formatDate = (d) => d.toLocaleDateString('en-GB').split('/').reverse().join('-'); // DD-MM-YYYY → YYYY-MM-DD\nconst todayFormatted = formatDate(today);\n\nconst isToday = (uploadDate) => {\n  const [day, month, year] = uploadDate.split('-');\n  return today.getDate() === parseInt(day) &&\n         today.getMonth() + 1 === parseInt(month) &&\n         today.getFullYear() === parseInt(year);\n};\n\nconst filtered = items.filter(item => {\n  const row = item.json;\n  return isToday(row.Upload_Date) && row.Priority === 'High';\n});\n\nreturn filtered;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "ca71bea6-8697-4bb6-bacf-9aad658de3eb",
+      "name": "Filter by Upload Date & Priority"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        900,
+        200
+      ],
+      "id": "92dd7831-2183-4272-8c82-d4bd1307e204",
+      "name": "Mistral Cloud Chat Model",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "MuuoznObfsdQDTbs",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a marketing assistant. Based on the details below, generate tailored social media content.\n\n**Title:** {{ $json.Title }}\n**Content Summary:** {{ $json.Content }}\n**Category:** {{ $json.Category }}\n**Image URL:** {{ $json.Image_URL }}\n\nCreate posts for:\n1. Twitter: Under 10 lines, sharp, 1-2 hashtags, end with CTA\n2. Telegram: Friendly tone, 2-3 lines, highlight insight, end with \"Read more\"\n3. Reddit: Conversational, 4-6 sentences, summary + insight, soft CTA\n\nIMPORTANT: Respond with ONLY valid JSON in this exact format, no other text:\n{\n  \"twitter_post\": \"your twitter content here\",\n  \"telegram_post\": \"your telegram content here\",\n  \"reddit_post\": \"your reddit content here\"\n}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        880,
+        0
+      ],
+      "id": "570ed2db-4888-451f-917c-2aed79a4768f",
+      "name": "Basic LLM Chain",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"twitter_post\": {\n      \"type\": \"string\",\n      \"description\": \"Twitter post under 280 characters with hashtags and CTA\"\n    },\n    \"telegram_post\": {\n      \"type\": \"string\",\n      \"description\": \"Telegram message 2-3 lines with friendly tone\"\n    },\n    \"reddit_post\": {\n      \"type\": \"string\",\n      \"description\": \"Reddit post conversational style with soft CTA\"\n    }\n  },\n  \"required\": [\"twitter_post\", \"telegram_post\", \"reddit_post\"],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        200
+      ],
+      "id": "afad1cab-5b70-452a-a82e-72866d38a5df",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "const platforms = $json.Platforms.toLowerCase();\n\nreturn [\n  {\n    json: {\n      postToTwitter: platforms.includes(\"twitter\"),\n      postToTelegram: platforms.includes(\"telegram\"),\n      postToReddit: platforms.includes(\"reddit\"),\n      ...$json  // preserve all original input data\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1480,
+        0
+      ],
+      "id": "860199a6-2bb1-4135-ad35-c37ab6357b40",
+      "name": "Checks Social media platform"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1dwWsIRZv5vKvTLQQj2YafvwApoPMCTXHcLwS03xn0sE",
+          "mode": "list",
+          "cachedResultName": "Content_Automation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dwWsIRZv5vKvTLQQj2YafvwApoPMCTXHcLwS03xn0sE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 276109270,
+          "mode": "list",
+          "cachedResultName": "Published_Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dwWsIRZv5vKvTLQQj2YafvwApoPMCTXHcLwS03xn0sE/edit#gid=276109270"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Twitter_Post": "={{ $json.output.twitter_post }}",
+            "Title": "={{ $('Code(To check image url)').item.json.Title }}",
+            "Category": "={{ $('Code(To check image url)').item.json.Category }}",
+            "Platforms": "={{ $('Code(To check image url)').item.json.Platforms }}",
+            "Upload_Date": "={{ $('Code(To check image url)').item.json.Upload_Date }}",
+            "Final_Image_URL": "={{ $('Code(To check image url)').item.json.Image_URL }}",
+            "Reddit_Post": "={{ $json.output.reddit_post }}",
+            "Telegram": "={{ $json.output.telegram_post }}"
+          },
+          "matchingColumns": [
+            "Title"
+          ],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Platforms",
+              "displayName": "Platforms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Upload_Date",
+              "displayName": "Upload_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reddit_Post",
+              "displayName": "Reddit_Post",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Telegram",
+              "displayName": "Telegram",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Twitter_Post",
+              "displayName": "Twitter_Post",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Final_Image_URL",
+              "displayName": "Final_Image_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1260,
+        0
+      ],
+      "id": "04f2153c-38ab-41e1-8e3f-90848653e062",
+      "name": "Google Sheets(To log updated value)",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g5EWrONTPvqwZr7Q",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const data = item.json;\n  data.use_existing_image = !!data.Image_URL && data.Image_URL.trim() !== '';\n  return { json: data };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "id": "afdf3ad2-4071-4f31-896b-c9446ef4f49b",
+      "name": "Code(To check image url)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3b4396bb-e7ff-48d7-8677-426d07060991",
+              "leftValue": "={{ $json.postToTwitter }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1740,
+        -180
+      ],
+      "id": "e302f0ae-2f9f-400d-9169-7dc500bf69cc",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3b4396bb-e7ff-48d7-8677-426d07060991",
+              "leftValue": "={{ $json.postToTelegram }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1740,
+        0
+      ],
+      "id": "0e3b9ba3-15fd-4070-bb57-429d799fa695",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3b4396bb-e7ff-48d7-8677-426d07060991",
+              "leftValue": "={{ $json.postToReddit }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1740,
+        200
+      ],
+      "id": "84f8f7ca-0230-4fc2-8cb6-787ce88a79af",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twitter.com/2/tweets",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth1Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"{{ $json.Twitter_Post }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        -180
+      ],
+      "id": "d1516ab6-470e-49ae-9e7a-ed5d469cebba",
+      "name": "Twitter",
+      "credentials": {
+        "oAuth1Api": {
+          "id": "ZQiGRrynO1uvpFlo",
+          "name": "Twitter Api Cred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot7798293409:AAEurhk7gg-6APOKmz578MvXXbhlq52kKYA/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "@Orbitx_Team"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.Telegram }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        0
+      ],
+      "id": "13ced0e8-7665-4a2c-904e-8a2883572273",
+      "name": "Telegram"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://oauth.reddit.com/api/submit",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "sr",
+              "value": "redditdev"
+            },
+            {
+              "name": "title",
+              "value": "{{ $json.Title }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.Reddit_Post }}\n"
+            },
+            {
+              "name": "kind",
+              "value": "link"
+            },
+            {
+              "name": "url",
+              "value": "={{ $json.Final_Image_URL }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        180
+      ],
+      "id": "2d331aca-84fc-4a5d-8946-151c9d7da13c",
+      "name": "Reddit",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "TZTaevzggoFURQTr",
+          "name": "Reddit API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C091AKE8WAZ",
+          "mode": "list",
+          "cachedResultName": "marketing_team"
+        },
+        "text": "=Message sent to:  {{ $json.postToTwitter ? 'Twitter ' : '' }} {{ $json.postToTelegram ? 'Telegram ' : '' }} {{ $json.postToReddit ? 'Reddit ' : '' }} ✅ Successfully published: {{ $('Checks Social media platform').item.json.Title }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        2280,
+        0
+      ],
+      "id": "67afd033-da59-4c02-9ee4-3b82c59b24d5",
+      "name": "Slack",
+      "webhookId": "90ba6ff5-c346-4493-90db-0d850dd06bea",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "n4PtBRNo0fQVeezB",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Filter by Upload Date & Priority",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter by Upload Date & Priority": {
+      "main": [
+        [
+          {
+            "node": "Code(To check image url)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets(To log updated value)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Checks Social media platform": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets(To log updated value)": {
+      "main": [
+        [
+          {
+            "node": "Checks Social media platform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code(To check image url)": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Twitter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Reddit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twitter": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "33fc0ed1-ec00-4ef3-bbbc-0d615b50c7e2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c2ddce833599e9b4aa840076a3a8a143c91ada4c78121148acc12f9ebfe54976",
+    "workflow_metadata": 
+    {
+      "title": "Marketing Agent - Content Publishing",
+      "description": "Automates the generation and publishing of tailored social media posts (Twitter, Telegram, Reddit) based on content from Google Sheets. Filters content by upload date and priority, generates posts using LLM, and publishes them with Slack notifications.",
+      "domain": "Marketing",
+      "tags": ["content publishing", "social media", "Google Sheets", "LLM", "Twitter", "Telegram", "Reddit", "Slack"],
+      "parameter_types": ["Title", "Content", "Category", "Image_URL", "Platforms", "Upload_Date"]
+    }
+
+  },
+  "id": "L9ylTBe1gfcuvoHf",
+  "tags": []
+}

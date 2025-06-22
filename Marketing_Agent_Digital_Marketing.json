@@ -1,0 +1,450 @@
+{
+  "name": "Marketing Agent(Digital Marketing)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "seo-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1883c96e-8a1a-4014-bab4-903a4350e40e",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        100
+      ],
+      "webhookId": "12345678-90ab-cdef-1234-567890abcdef"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "cb5872ab-7ff7-4727-b3b4-08907a7248a4",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -380,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.body.url }}",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "927511f9-65b8-4d26-97b2-f3c1e69e267d",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -160,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// HTML Parser Code - n8n Compatible (No external dependencies)\n// Get HTML content from previous node\nconst htmlContent = $input.first().json.data;\n\n// Helper function to extract text between tags\nfunction extractTextBetweenTags(html, tagName) {\n  const regex = new RegExp(`<${tagName}[^>]*>([^<]*)<\\/${tagName}>`, 'gi');\n  const matches = [];\n  let match;\n  while ((match = regex.exec(html)) !== null) {\n    matches.push(match[1].trim());\n  }\n  return matches;\n}\n\n// Helper function to extract attribute value\nfunction extractAttribute(html, selector, attribute) {\n  const regex = new RegExp(`<${selector}[^>]*${attribute}=[\"']([^\"']*)[\"'][^>]*>`, 'i');\n  const match = html.match(regex);\n  return match ? match[1] : '';\n}\n\n// Helper function to count occurrences of a tag\nfunction countTags(html, tagName) {\n  const regex = new RegExp(`<${tagName}[^>]*>`, 'gi');\n  const matches = html.match(regex);\n  return matches ? matches.length : 0;\n}\n\n// Extract title\nconst titleMatch = htmlContent.match(/<title[^>]*>([^<]*)<\\/title>/i);\nconst title = titleMatch ? titleMatch[1].trim() : '';\n\n// Extract meta description\nlet description = '';\nconst metaDescRegex = /<meta[^>]*name=[\"']description[\"'][^>]*content=[\"']([^\"']*)[\"'][^>]*>/i;\nconst metaDescMatch = htmlContent.match(metaDescRegex);\nif (metaDescMatch) {\n  description = metaDescMatch[1];\n} else {\n  // Try og:description\n  const ogDescRegex = /<meta[^>]*property=[\"']og:description[\"'][^>]*content=[\"']([^\"']*)[\"'][^>]*>/i;\n  const ogDescMatch = htmlContent.match(ogDescRegex);\n  if (ogDescMatch) {\n    description = ogDescMatch[1];\n  }\n}\n\n// Extract keywords\nconst keywordsRegex = /<meta[^>]*name=[\"']keywords[\"'][^>]*content=[\"']([^\"']*)[\"'][^>]*>/i;\nconst keywordsMatch = htmlContent.match(keywordsRegex);\nconst keywords = keywordsMatch ? keywordsMatch[1] : '';\n\n// Extract H1 tags\nconst h1Tags = extractTextBetweenTags(htmlContent, 'h1');\n\n// Extract H2 tags\nconst h2Tags = extractTextBetweenTags(htmlContent, 'h2');\n\n// Count images\nconst totalImages = countTags(htmlContent, 'img');\n\n// Count images with alt text\nconst imgWithAltRegex = /<img[^>]*alt=[\"'][^\"']*[\"'][^>]*>/gi;\nconst imagesWithAltMatches = htmlContent.match(imgWithAltRegex);\nconst imagesWithAlt = imagesWithAltMatches ? imagesWithAltMatches.length : 0;\nconst imagesWithoutAlt = totalImages - imagesWithAlt;\n\n// Extract canonical URL\nconst canonicalRegex = /<link[^>]*rel=[\"']canonical[\"'][^>]*href=[\"']([^\"']*)[\"'][^>]*>/i;\nconst canonicalMatch = htmlContent.match(canonicalRegex);\nconst canonicalUrl = canonicalMatch ? canonicalMatch[1] : '';\n\n// Check for schema markup\nconst schemaRegex = /<script[^>]*type=[\"']application\\/ld\\+json[\"'][^>]*>/i;\nconst hasSchemaMarkup = schemaRegex.test(htmlContent);\n\n// Return structured data\nreturn {\n  url: $input.first().json.url || '',\n  title: title,\n  description: description,\n  keywords: keywords,\n  h1_tags: h1Tags,\n  h2_tags: h2Tags,\n  h1_count: h1Tags.length,\n  h2_count: h2Tags.length,\n  total_images: totalImages,\n  images_with_alt: imagesWithAlt,\n  images_without_alt: imagesWithoutAlt,\n  canonical_url: canonicalUrl,\n  has_schema_markup: hasSchemaMarkup,\n  content_length: htmlContent.length,\n  analyzed_at: new Date().toISOString()\n};"
+      },
+      "id": "10a268e8-50ed-41e2-9b95-5819a71fa9f3",
+      "name": "HTML Parser Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        60,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process and format SEO data for reporting\nconst inputData = $input.all();\n\n// Debug: Log all input data to see what we're receiving\nconsole.log('=== DEBUG: All Input Data ===');\nconsole.log('Number of input items:', inputData.length);\ninputData.forEach((item, index) => {\n  console.log(`Input ${index}:`, JSON.stringify(item, null, 2));\n});\n\n// Try multiple ways to find the data\nlet htmlData = null;\nlet summaryData = null;\nlet analysisData = null;\n\n// Method 1: Look for HTML parsing data\nhtmlData = inputData.find(item => \n  item.json && (item.json.title !== undefined || item.json.url !== undefined)\n);\n\n// Method 2: Try to get data from specific nodes\ntry {\n  const htmlParserData = $('HTML Parser Code').all();\n  console.log('HTML Parser Data:', htmlParserData);\n  if (htmlParserData && htmlParserData.length > 0) {\n    htmlData = htmlParserData[0];\n  }\n} catch (error) {\n  console.log('Could not get HTML Parser data:', error.message);\n}\n\n// Method 3: Look for AI-generated content\nsummaryData = inputData.find(item => \n  item.json && \n  item.json.message && \n  item.json.message.content && \n  item.json.message.content.length < 200\n);\n\nanalysisData = inputData.find(item => \n  item.json && \n  item.json.message && \n  item.json.message.content && \n  item.json.message.content.length > 200\n);\n\n// Method 4: Try to get AI data from OpenAI nodes\ntry {\n  const aiData = $('OpenAI').all();\n  console.log('OpenAI Data:', aiData);\n  if (aiData && aiData.length > 0) {\n    aiData.forEach((data, index) => {\n      const content = data.json?.message?.content || data.json?.choices?.[0]?.message?.content;\n      if (content) {\n        if (content.length < 200 && !summaryData) {\n          summaryData = data;\n        } else if (content.length >= 200 && !analysisData) {\n          analysisData = data;\n        }\n      }\n    });\n  }\n} catch (error) {\n  console.log('Could not get OpenAI data:', error.message);\n}\n\nconsole.log('=== Found Data ===');\nconsole.log('HTML Data found:', !!htmlData);\nconsole.log('Summary Data found:', !!summaryData);\nconsole.log('Analysis Data found:', !!analysisData);\n\n// Get project name from Edit Fields node\nlet projectName = 'Unnamed Project';\nlet websiteUrl = 'No URL provided';\n\ntry {\n  const editFieldsData = $('Edit Fields').first();\n  console.log('Edit Fields Data:', editFieldsData);\n  if (editFieldsData && editFieldsData.json) {\n    if (editFieldsData.json.project_name) {\n      projectName = editFieldsData.json.project_name;\n    }\n    if (editFieldsData.json.url) {\n      websiteUrl = editFieldsData.json.url;\n    }\n  }\n} catch (error) {\n  console.log('Could not retrieve data from Edit Fields node:', error.message);\n}\n\n// Try to get URL from HTTP Request node if not found in Edit Fields\nif (websiteUrl === 'No URL provided') {\n  try {\n    const httpData = $('HTTP Request').first();\n    console.log('HTTP Request Data:', httpData);\n    if (httpData && httpData.json && httpData.json.url) {\n      websiteUrl = httpData.json.url;\n    }\n  } catch (error) {\n    console.log('Could not retrieve URL from HTTP Request node:', error.message);\n  }\n}\n\n// Format the processed data\nconst processedData = {\n  // Basic Info\n  url: websiteUrl,\n  title: htmlData?.json?.title || 'No title found',\n  description: htmlData?.json?.description || htmlData?.json?.meta_description || 'No description found',\n  keywords: htmlData?.json?.keywords || htmlData?.json?.meta_keywords || 'No keywords found',\n  \n  // Technical SEO Metrics\n  h1_count: htmlData?.json?.h1_tags?.length || htmlData?.json?.h1_count || 0,\n  h1_tags: htmlData?.json?.h1_tags?.join(', ') || htmlData?.json?.h1_tags || 'None',\n  h2_count: htmlData?.json?.h2_tags?.length || htmlData?.json?.h2_count || 0,\n  h2_tags: htmlData?.json?.h2_tags?.join(', ') || htmlData?.json?.h2_tags || 'None',\n  total_images: htmlData?.json?.total_images || htmlData?.json?.image_count || 0,\n  images_without_alt: htmlData?.json?.images_without_alt || htmlData?.json?.images_no_alt || 0,\n  images_with_alt: (htmlData?.json?.total_images || htmlData?.json?.image_count || 0) - (htmlData?.json?.images_without_alt || htmlData?.json?.images_no_alt || 0),\n  has_schema_markup: htmlData?.json?.has_schema_markup || htmlData?.json?.schema_markup || false,\n  canonical_url: htmlData?.json?.canonical_url || htmlData?.json?.canonical || 'Not found',\n  \n  // Content Analysis\n  content_length: htmlData?.json?.content_length || 0,\n  word_count: htmlData?.json?.word_count || 0,\n  \n  // AI Generated Content - handle different OpenAI response formats\n  summary: summaryData?.json?.message?.content || \n           summaryData?.json?.choices?.[0]?.message?.content || \n           summaryData?.json?.content ||\n           'Summary generation failed',\n  detailed_analysis: analysisData?.json?.message?.content || \n                    analysisData?.json?.choices?.[0]?.message?.content || \n                    analysisData?.json?.content ||\n                    'Analysis generation failed',\n  \n  // Metadata\n  analyzed_at: new Date().toISOString(),\n  analysis_date: new Date().toLocaleDateString('en-US', {\n    year: 'numeric',\n    month: 'long',\n    day: 'numeric'\n  }),\n  analysis_time: new Date().toLocaleTimeString('en-US', {\n    hour: '2-digit',\n    minute: '2-digit'\n  }),\n  project_name: projectName\n};\n\n// Calculate SEO Score based on various factors\nlet seoScore = 0;\nconst scoringCriteria = [];\n\n// Title tag (20 points)\nif (processedData.title && processedData.title !== 'No title found') {\n  seoScore += 20;\n  scoringCriteria.push('✓ Title tag present');\n} else {\n  scoringCriteria.push('✗ Missing title tag');\n}\n\n// Meta description (20 points)\nif (processedData.description && processedData.description !== 'No description found') {\n  seoScore += 20;\n  scoringCriteria.push('✓ Meta description present');\n} else {\n  scoringCriteria.push('✗ Missing meta description');\n}\n\n// Keywords (15 points)\nif (processedData.keywords && processedData.keywords !== 'No keywords found') {\n  seoScore += 15;\n  scoringCriteria.push('✓ Keywords found');\n} else {\n  scoringCriteria.push('✗ No keywords found');\n}\n\n// H1 tags (15 points)\nif (processedData.h1_count > 0) {\n  seoScore += 15;\n  scoringCriteria.push(`✓ H1 tags present (${processedData.h1_count})`);\n} else {\n  scoringCriteria.push('✗ No H1 tags found');\n}\n\n// Image optimization (15 points)\nif (processedData.total_images > 0) {\n  if (processedData.images_without_alt === 0) {\n    seoScore += 15;\n    scoringCriteria.push('✓ All images have alt text');\n  } else {\n    const altPercentage = Math.round(((processedData.total_images - processedData.images_without_alt) / processedData.total_images) * 100);\n    seoScore += Math.round(15 * (altPercentage / 100));\n    scoringCriteria.push(`⚠ ${altPercentage}% of images have alt text`);\n  }\n} else {\n  scoringCriteria.push('- No images to analyze');\n}\n\n// Schema markup (15 points)\nif (processedData.has_schema_markup) {\n  seoScore += 15;\n  scoringCriteria.push('✓ Schema markup detected');\n} else {\n  scoringCriteria.push('✗ No schema markup found');\n}\n\n// Add calculated fields\nprocessedData.seo_score = Math.min(seoScore, 100); // Cap at 100\nprocessedData.seo_grade = seoScore >= 80 ? 'A' : \n                         seoScore >= 60 ? 'B' : \n                         seoScore >= 40 ? 'C' : 'D';\n\nprocessedData.seo_status = seoScore >= 80 ? 'Excellent' :\n                          seoScore >= 60 ? 'Good' :\n                          seoScore >= 40 ? 'Needs Improvement' : 'Poor';\n\nprocessedData.scoring_criteria = scoringCriteria;\n\n// Generate recommendations based on score\nconst recommendations = [];\nif (processedData.title === 'No title found') {\n  recommendations.push('Add a descriptive title tag (50-60 characters)');\n}\nif (processedData.description === 'No description found') {\n  recommendations.push('Add a compelling meta description (150-160 characters)');\n}\nif (processedData.h1_count === 0) {\n  recommendations.push('Add at least one H1 tag to structure your content');\n}\nif (processedData.images_without_alt > 0) {\n  recommendations.push(`Add alt text to ${processedData.images_without_alt} images for better accessibility`);\n}\nif (!processedData.has_schema_markup) {\n  recommendations.push('Consider adding schema markup for better search visibility');\n}\nif (processedData.keywords === 'No keywords found') {\n  recommendations.push('Add relevant keywords to improve search targeting');\n}\n\nprocessedData.recommendations = recommendations;\n\n// Log the processed data for debugging\nconsole.log('Processed SEO Data:', JSON.stringify(processedData, null, 2));\n\nreturn processedData;"
+      },
+      "id": "6da8fc2a-c1b2-48d3-91f9-b376bd04686c",
+      "name": "Data Processing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a senior digital marketing consultant and SEO expert with over 10 years of experience in website optimization, content strategy, and search engine marketing. Your expertise spans technical SEO, content marketing, user experience optimization, and competitive analysis across diverse industries.\n\nTASK: Conduct a comprehensive SEO and digital marketing analysis of the provided website and generate both a concise executive summary and a detailed strategic report.\n\nANALYSIS FRAMEWORK:\nAnalyze the website using advanced SEO principles, current Google algorithm factors, user experience best practices, and modern digital marketing strategies. Consider technical SEO elements, content optimization, user intent alignment, and competitive positioning.\n\nPROVIDED WEBSITE DATA:\n- URL: {{ $json.url }}\n- Page Title: {{ $json.title || \"No title available\" }}\n- Meta Description: {{ $json.description || \"No description available\" }}\n- Meta Keywords: {{ $json.keywords || \"No keywords found\" }}\n- H1 Tags: {{ $json.h1_tags ? $json.h1_tags.join(\", \") : \"None found\" }} (Count: {{ $json.h1_count || 0 }})\n- H2 Tags Count: {{ $json.h2_count || 0 }}\n- Total Images: {{ $json.total_images || 0 }}\n- Images Missing Alt Text: {{ $json.images_without_alt || 0 }}\n- Canonical URL: {{ $json.canonical_url || \"Not specified\" }}\n- Schema Markup Present: {{ $json.has_schema_markup ? \"Yes\" : \"No\" }}\n- Content Length: {{ $json.content_length || 0 }} characters\n- Analysis Date: {{ new Date().toLocaleDateString() }}\n\nREQUIRED OUTPUT FORMAT:\n\n**EXECUTIVE SUMMARY** (Exactly 100 characters - this is critical for dashboard display):\n[Generate a compelling, action-oriented summary that captures the website's SEO status and primary opportunity in exactly 100 characters including spaces]\n\n**DETAILED ANALYSIS REPORT:**\n\n**1. SEO TECHNICAL AUDIT**\nEvaluate the technical SEO foundation including:\n- Title tag optimization (length, keyword placement, brand inclusion)\n- Meta description effectiveness (length, call-to-action, keyword integration)\n- Header structure optimization (H1 uniqueness, H2 hierarchy)\n- Image optimization status and accessibility compliance\n- Schema markup implementation and structured data opportunities\n- URL structure and canonical tag usage\n- Overall technical SEO score and priority fixes\n\n**2. CONTENT STRATEGY ANALYSIS**\nAssess content quality and optimization:\n- Content depth and comprehensiveness relative to topic\n- Keyword targeting strategy and search intent alignment\n- Content freshness and evergreen value potential\n- User engagement indicators based on content structure\n- Content gaps and expansion opportunities\n- Competitive content positioning insights\n\n**3. USER EXPERIENCE & ENGAGEMENT ASSESSMENT**\nAnalyze UX factors that impact SEO:\n- Content readability and structure\n- Visual hierarchy and information architecture\n- Mobile-first design considerations (inferred from structure)\n- Page loading optimization opportunities\n- User journey optimization potential\n- Conversion-focused design elements\n\n**4. AUDIENCE TARGETING & MARKET POSITIONING**\nDetermine target audience and market fit:\n- Primary audience demographics and psychographics (inferred from content)\n- Search behavior alignment and user intent matching\n- Industry vertical analysis and competitive landscape\n- Brand positioning and differentiation opportunities\n- Market trend alignment and future-proofing potential\n\n**5. GROWTH OPPORTUNITIES MATRIX**\nPrioritize improvement areas:\n\n**HIGH IMPACT, QUICK WINS:**\n- [List 3-4 immediate optimization opportunities]\n\n**MEDIUM IMPACT, STRATEGIC INVESTMENTS:**\n- [List 3-4 medium-term improvements]\n\n**LONG-TERM COMPETITIVE ADVANTAGES:**\n- [List 2-3 strategic initiatives for sustained growth]\n\n**6. COMPETITIVE STRENGTHS ANALYSIS**\nHighlight current advantages:\n- Existing SEO assets and content strengths\n- Technical implementation successes\n- Brand messaging and positioning wins\n- User experience advantages\n- Content differentiation factors\n\n**7. ACTIONABLE RECOMMENDATIONS**\nProvide specific, measurable next steps:\n\n**IMMEDIATE ACTIONS (Next 30 days):**\n1. [Specific action with expected impact]\n2. [Specific action with expected impact]\n3. [Specific action with expected impact]\n\n**STRATEGIC INITIATIVES (Next 90 days):**\n1. [Strategic initiative with success metrics]\n2. [Strategic initiative with success metrics]\n3. [Strategic initiative with success metrics]\n\n**PERFORMANCE BENCHMARKS:**\n- Current SEO Health Score: [X]/100\n- Expected improvement potential: [X]% increase in organic visibility\n- Priority ranking: [High/Medium/Low] based on competitive analysis\n- Investment level recommended: [Low/Medium/High] resource allocation\n\n**INDUSTRY CONTEXT & TRENDS:**\nProvide relevant industry insights and how this website aligns with current digital marketing trends, algorithm updates, and best practices.\n\nANALYSIS GUIDELINES:\n- If data is missing or incomplete, make intelligent inferences based on URL structure, available content, and industry standards\n- Provide specific, actionable recommendations rather than generic advice\n- Include quantitative assessments where possible (scores, percentages, rankings)\n- Consider mobile-first indexing, Core Web Vitals, and E-A-T factors in your analysis\n- Align recommendations with current Google algorithm priorities and ranking factors\n- Balance technical SEO with content strategy and user experience considerations\n\nOUTPUT REQUIREMENTS:\n- Executive Summary: Exactly 100 characters\n- Detailed Report: Comprehensive analysis following the above structure\n- Tone: Professional, authoritative, actionable\n- Format: Clear sections with bullet points and specific recommendations\n- Length: Thorough but concise, focusing on actionable insights over generic information",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        280,
+        100
+      ],
+      "id": "82e16260-7261-452f-84c5-d60e8979585f",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        300,
+        280
+      ],
+      "id": "4470fce0-8035-4414-9769-c6ddc834b23c",
+      "name": "Mistral Cloud Chat Model",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "MuuoznObfsdQDTbs",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1Ax6O88K23p7xAvKdyYS0tUJMBH78HeCLVaX0TheVRv0",
+          "mode": "list",
+          "cachedResultName": "SEO Analysis ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ax6O88K23p7xAvKdyYS0tUJMBH78HeCLVaX0TheVRv0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1938210286,
+          "mode": "list",
+          "cachedResultName": "Sheet 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ax6O88K23p7xAvKdyYS0tUJMBH78HeCLVaX0TheVRv0/edit#gid=1938210286"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{ $json.title }}",
+            "Description": "={{ $json.description }}",
+            "Keywords": "={{ $json.keywords }}",
+            "H1 Tags": "={{ $json.h1_tags }}",
+            "H2 Tags": "={{ $json.h2_tags }}",
+            "Detailed Analysis": "={{ $json.detailed_analysis }}",
+            "Summary": "={{ $json.summary }}",
+            "SEO Score": "={{ $json.seo_score }}",
+            "SEO Grade": "={{ $json.seo_grade }}",
+            "Recommendations": "={{ $json.recommendations[0] }}&&{{ $json.recommendations[1] }}"
+          },
+          "matchingColumns": [
+            "Title"
+          ],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Keywords",
+              "displayName": "Keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "H1 Tags",
+              "displayName": "H1 Tags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "H2 Tags",
+              "displayName": "H2 Tags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Detailed Analysis",
+              "displayName": "Detailed Analysis",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "SEO Score",
+              "displayName": "SEO Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "SEO Grade",
+              "displayName": "SEO Grade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Recommendations",
+              "displayName": "Recommendations",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        880,
+        100
+      ],
+      "id": "36fd4232-d8cb-44ca-a203-5c61a92cdac1",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g5EWrONTPvqwZr7Q",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Edit Fields').item.json.body.email }}",
+        "subject": "=SEO Report Ready - {{ $('Edit Fields').item.json.project_name || 'Website Analysis' }}",
+        "message": "=Hi there,\n\nYour SEO analysis is now complete and ready for review. Here's a summary of your website's performance:\n\n📊 SEO Analysis Summary  \nTitle: {{ $json.Title }}  \nDescription: {{ $json.Description }}\n\n🧠 Detailed Insights  \nAnalysis: {{ $json['Detailed Analysis'] }}  \nSummary: {{ $json.Summary }}\n\n📈 Performance Metrics  \nSEO Score: {{ $('Data Processing').item.json.seo_score }}/100  \nGrade: {{ $('Data Processing').item.json.seo_grade }}\n\n💡 Recommendations  \n1. {{ $('Data Processing').item.json.recommendations[0] }}  \n2. {{ $('Data Processing').item.json.recommendations[1] }}\n\n📁 The full SEO report has been saved to Google Drive and can be accessed using the link provided in the “Google Drive Sharing” step.\n\nThank you for using Orbit Marketing Agent. We hope these insights help improve your website’s visibility and performance.\n\nWarm regards,  \nOrbit Marketing Agent\n\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1100,
+        100
+      ],
+      "id": "7c402fff-9eaf-4c3f-90c0-d908bc75ef2a",
+      "name": "Gmail",
+      "webhookId": "7cea4d4b-2d5e-4f96-aef8-30bd71085eb1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "81dTrgb6UsA7z2vs",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C091AKE8WAZ",
+          "mode": "list",
+          "cachedResultName": "marketing_team"
+        },
+        "text": "=SEO analysis for {{ $('Google Sheets').item.json.Title }} under the {{ $('Webhook').item.json.body.project_name }}  is complete. The summary, score, grade, and recommendations were successfully generated and emailed to the user. The full detailed report has been uploaded to Google Drive. All content was published to the selected social platforms as per user input.",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1320,
+        100
+      ],
+      "id": "846a5527-d6de-4293-8a88-6486af247c60",
+      "name": "Slack",
+      "webhookId": "a8eb8811-9051-4c19-a6c7-5501eb3fa0a7",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "n4PtBRNo0fQVeezB",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML Parser Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Processing": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML Parser Code": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Data Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "faab7cfb-b2cb-4def-bd2b-9bc2efe65eb1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c2ddce833599e9b4aa840076a3a8a143c91ada4c78121148acc12f9ebfe54976",
+    "workflow_metadata": 
+    {
+      "title": "Marketing Agent - Digital Marketing & SEO Analysis",
+      "description": "Performs a comprehensive SEO and digital marketing analysis of a given website URL. Extracts meta tags, headings, images, schema markup, and generates a structured executive summary and detailed report with improvement recommendations. Results are logged to Google Sheets, emailed, and announced via Slack.",
+      "domain": "Marketing",
+      "tags": ["SEO", "digital marketing", "website analysis", "OpenAI", "Google Sheets", "email notification", "Slack alert"],
+      "parameter_types": ["url", "project_name"]
+    }
+  },
+  "id": "kRvXqBsErdw6FU2i",
+  "tags": [
+    {
+      "createdAt": "2025-06-13T14:39:42.631Z",
+      "updatedAt": "2025-06-13T14:39:42.631Z",
+      "id": "cXdghVEXQRygivmN",
+      "name": "SEO Automation"
+    }
+  ]
+}

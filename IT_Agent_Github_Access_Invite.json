@@ -1,0 +1,235 @@
+{
+  "name": "IT Agent(Github Access Invite)",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1qMRJhVIjjSgwRagr-_aUqZ1t-F0hQn4HjQBsv0NKQ0U",
+          "mode": "list",
+          "cachedResultName": "Github_TeamData",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qMRJhVIjjSgwRagr-_aUqZ1t-F0hQn4HjQBsv0NKQ0U/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2012377266,
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qMRJhVIjjSgwRagr-_aUqZ1t-F0hQn4HjQBsv0NKQ0U/edit#gid=2012377266"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "GitHub Username",
+              "lookupValue": "={{ $json.body.github_username }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        220,
+        0
+      ],
+      "id": "7dac2525-fbe1-4ec7-95a0-aba40adf45e6",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g5EWrONTPvqwZr7Q",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter rows with valid request types: Add, Remove, Modify\nconst validTypes = ['Add', 'Remove', 'Modify'];\n\nconst results = [];\n\nfor (const item of $input.all()) {\n  const row = item.json;\n\n  if (\n    row['Request Type'] &&\n    validTypes.includes(row['Request Type'].trim()) &&\n    row['GitHub Username'] &&\n    row['Access Level'] &&\n    row['Repository Name']\n  ) {\n    results.push({\n      json: {\n        name: row['Name'],\n        email: row['Email'],\n        username: row['GitHub Username'],\n        requestType: row['Request Type'],\n        access: row['Access Level'],\n        repo: row['Repository Name'],\n        justification: row['Justification'] || 'No justification provided',\n      },\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        0
+      ],
+      "id": "c40ee781-e18f-4fbf-aeb2-69f3d44a8c7a",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/provision-access",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "74ade93e-8800-4f2f-bdd7-0a86bfc1e6a4",
+      "name": "Webhook",
+      "webhookId": "307aaaef-92f3-4dce-9e4a-1ad7a5616805"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/OrbitxBot/Test-Repo/collaborators/{{ $json.username }}\n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"permission\": \"{{ $json.access }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        620,
+        0
+      ],
+      "id": "dd6c74a3-4df3-4f0a-aabe-51a5ed1d8390",
+      "name": "Add GitHub Collaborator"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Code').item.json.email }}",
+        "subject": "GitHub Access Invitation",
+        "message": "=Hi {{ $('Code').item.json.name }},<br><br> You’ve been invited to collaborate on the <b>{{ $json.repository.name }}</b> repository.<br> Please <a href=\"{{ $json.html_url }}\">click here to accept the invitation</a>.<br><br> Thanks,<br> IT Team",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        820,
+        0
+      ],
+      "id": "3a0e45fa-8a4e-41eb-8973-978d88088bb1",
+      "name": "Gmail",
+      "webhookId": "a39efb52-38e1-49ee-9f29-4a6cea7ba059",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "81dTrgb6UsA7z2vs",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C091VSXP22C",
+          "mode": "list",
+          "cachedResultName": "it_team"
+        },
+        "text": "=🎉  {{ $('Code').item.json.name }} has been added as a collaborator to the repository \"{{ $('Add GitHub Collaborator').item.json.repository.name }}\" with {{ $('Code').item.json.access }} permissions.",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "56f365cb-b96e-4f3f-8b3f-6d4d2535c341",
+      "name": "Slack",
+      "webhookId": "e487fa41-d6fa-42da-96f2-10feb72631a0",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "n4PtBRNo0fQVeezB",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Add GitHub Collaborator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add GitHub Collaborator": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7cdd9290-95eb-418a-b95c-00a84ec77051",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c2ddce833599e9b4aa840076a3a8a143c91ada4c78121148acc12f9ebfe54976",
+    "workflow_metadata": 
+    {
+      "title": "IT Agent - GitHub Access Invite",
+      "description": "Automates inviting a user to a GitHub repository based on request details from Google Sheets, provisions access via GitHub API, and notifies the user by email and Slack.",
+      "domain": "IT",
+      "tags": ["GitHub", "access provision", "collaborator invite", "Google Sheets", "email notification", "Slack alert"],
+      "parameter_types": ["github_username", "name", "email", "requestType", "access", "repo", "justification"]
+    }
+  },
+  "id": "bw2UuAANrmMVcU6h",
+  "tags": []
+}

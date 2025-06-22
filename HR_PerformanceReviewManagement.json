@@ -1,0 +1,371 @@
+{
+  "name": "HR_PerformanceReviewManagement",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1ciY-f6zgm3_cg_I8h923_LT5jSYvC3N1Q75715XcOrU/edit?gid=162664237#gid=162664237",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1ciY-f6zgm3_cg_I8h923_LT5jSYvC3N1Q75715XcOrU/edit?gid=162664237#gid=162664237",
+          "mode": "url"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        200,
+        0
+      ],
+      "id": "da38901b-7731-4a77-9d38-bb284a502fa2",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g5EWrONTPvqwZr7Q",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "=={{$json[\"ManagerEmail\"]}}\n",
+        "subject": "=Bi-Annual Performance Review for {{$json[\"Name\"]}}\n",
+        "message": "=Hi,\n\nPlease take a moment to complete the bi-annual performance review for <strong>{{$json[\"Name\"]}}</strong> using the form below:\n\n<a href=\"https://docs.google.com/forms/d/e/1FAIpQLSc0sNPEefo2N_mePPOPNJKCRwsZUG5ezFKeAi0PJA88A1Qx6g/viewform?usp=header\">Performance Review Form</a>\n\nMake sure to include your feedback and rating to help HR finalize the review.\n\nThank you,<br>\nHR Team\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        420,
+        0
+      ],
+      "id": "f1daa0dc-ef3d-401a-bf85-1ddc8bb15c4a",
+      "name": "Gmail",
+      "webhookId": "36941fc4-c0c8-4745-92ac-252bb01955d1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "81dTrgb6UsA7z2vs",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 7,
+        "unit": "days"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        0
+      ],
+      "id": "46b4bf2d-620d-4049-b9bd-7d85af846e42",
+      "name": "Wait 7 Days",
+      "webhookId": "8faa22ff-6984-4862-988e-a94ff304cc9b"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "15nuqTg8Z9YyPB0_uG_pRR5NJlsYH2lFTsP0Ylo5uMz0",
+          "mode": "list",
+          "cachedResultName": "Manager Performance Review (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/15nuqTg8Z9YyPB0_uG_pRR5NJlsYH2lFTsP0Ylo5uMz0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "id",
+          "value": 1478322056
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        780,
+        0
+      ],
+      "id": "e354b816-a74e-40fb-827b-388340c5b3f3",
+      "name": "Google Sheets1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g5EWrONTPvqwZr7Q",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6b251412-bd69-48a4-a9fc-deac912f6a5d",
+              "leftValue": "={{$json[\"Name\"]}}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        940,
+        0
+      ],
+      "id": "c3ca13d0-b924-45aa-9c87-2a38d84db2c7",
+      "name": "If Response Submitted"
+    },
+    {
+      "parameters": {
+        "sendTo": "=={{$json[\"Email\"]}}",
+        "subject": "Your Performance Review is Complete",
+        "message": "=Hi {{$json[\"Name\"]}},  Your manager has submitted your performance review.  Please contact HR if you'd like to discuss the results.  Best regards,<br> HR Team",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1160,
+        -140
+      ],
+      "id": "1e9c673d-0db8-4b6a-b875-7e77a4929cca",
+      "name": "Notify employee",
+      "webhookId": "b090fdea-5205-4c89-b2b3-1cb04d160fa6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "81dTrgb6UsA7z2vs",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$json[\"ManagerEmail\"]}}",
+        "subject": "=Pending Review for {{$json[\"Name\"]}}",
+        "message": "=Reminder: The performance review for {{$json[\"Name\"]}} has not been submitted yet.  Please ensure it is completed as soon as possible.  Thank you,<br> Automated Review System",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1160,
+        100
+      ],
+      "id": "68121c30-4d9c-4816-a51f-b83a16a76b58",
+      "name": "Notify HR - Missing Review",
+      "webhookId": "3eb0774e-3bcc-43eb-8b08-72f670e2f778",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "81dTrgb6UsA7z2vs",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "manager-review-submitted",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -280,
+        0
+      ],
+      "id": "9107b005-995c-4fa0-9bbe-969d43f1c31d",
+      "name": "Webhook",
+      "webhookId": "8399a136-fdb5-49c9-b46b-40a42ec89d49"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "765744cd-b5ba-45de-a96f-5427085d8806",
+              "name": "EmployeeID",
+              "value": "={{$json[\"body\"][\"EmployeeID\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "1d7ea9e7-d49f-4845-9efb-696132023da3",
+              "name": "Name",
+              "value": "={{$json[\"body\"][\"Name\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "4b60f8ee-2629-443f-ae52-7eca7a832543",
+              "name": "Email",
+              "value": "={{$json[\"body\"][\"Email\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "712c3add-7af9-457b-8ec1-ced5799dccb2",
+              "name": "Designation",
+              "value": "={{$json[\"body\"][\"Designation\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "0fb627d5-94fa-4022-be39-ad048ce81b3d",
+              "name": "Department",
+              "value": "={{$json[\"body\"][\"Department\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "f5b83cf2-3e9c-436b-84a7-27b123d84f08",
+              "name": "ReviewPeriod",
+              "value": "={{$json[\"body\"][\"ReviewPeriod\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "64d48e6f-56ee-4b8c-b306-92cfb16dba94",
+              "name": "PerformanceRating",
+              "value": "={{$json[\"body\"][\"PerformanceRating\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "04a5a2fd-d2e1-4aeb-918e-f17c09b4c281",
+              "name": "ManagerEmail",
+              "value": "={{$json[\"body\"][\"ManagerEmail\"]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -40,
+        0
+      ],
+      "id": "0378ce96-2b8b-40fb-a94a-738050d37b41",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Wait 7 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 7 Days": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets1": {
+      "main": [
+        [
+          {
+            "node": "If Response Submitted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Response Submitted": {
+      "main": [
+        [
+          {
+            "node": "Notify employee",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify HR - Missing Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "aba02001-e525-4d5d-80b2-616b2e3af6e3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c2ddce833599e9b4aa840076a3a8a143c91ada4c78121148acc12f9ebfe54976",
+    "workflow_metadata": 
+    {
+      "title": "HR Agent - Performance Review Management",
+      "description": "Automates the bi-annual performance review cycle: emails review forms to managers, waits for completion, checks responses, notifies employees and HR if reviews are missing or completed.",
+      "domain": "HR",
+      "tags": ["performance review", "manager feedback", "reminders", "Google Sheets", "email automation"],
+      "parameter_types": ["EmployeeID", "Name", "Email", "Designation", "Department", "ReviewPeriod", "PerformanceRating", "ManagerEmail"]
+    }
+
+  },
+  "id": "P8Ma7B0bve82Iecl",
+  "tags": []
+}
