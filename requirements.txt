@@ -1,0 +1,22 @@
+# === Streamlit app ===
+streamlit
+SpeechRecognition
+pyaudio
+streamlit-audiorecorder  # If you use it
+
+# === Core Python tools ===
+requests>=2.31.0
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+
+# === LangChain with Mistral support ===
+langchain>=0.1.0
+langchain-mistralai>=0.1.0
+
+# === Mistral official SDK (updated version) ===
+mistralai>=1.0.0
+
+# === ChromaDB ===
+chromadb==0.4.18
+
+
