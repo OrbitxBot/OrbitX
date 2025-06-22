@@ -1,4 +1,0 @@
-streamlit
-SpeechRecognition
-pyaudio  # Required for microphone input
-
